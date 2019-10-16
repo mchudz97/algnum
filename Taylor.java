@@ -1,12 +1,13 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-
+import static java.lang.Math.*;
 public class Taylor {
 
 
     private double[] arr1;
     private double[] arr2;
+
     Taylor(){
 
     }
@@ -23,12 +24,12 @@ public class Taylor {
         writer.close();
     }
     public double[][] generateAllErrors(double start,double end, int N, double sensitivity){
-        double[][] finalList= new double[4][(int)((end-start)/sensitivity)];
+        double[][] finalList= new double[4][(int)((end-start)*10/sensitivity)];
         int i=0;
         double l=start;
         //for(double l=start;l<end; l+=sensitivity){
-        for(int j=0;j<(end-start)/sensitivity; j++){
-
+        for(int j=0;j<(int)((end-start)*10/sensitivity); j++){
+            System.out.println(j);
             this.fillArrays(l, N);
             double[] temp=this.generateErrors(l);
             finalList[0][j]=temp[0];
@@ -60,22 +61,22 @@ public class Taylor {
 
     public double[] generateErrors(double l){
         double[] arr= new double[4];
-        double log= Math.log(l);
 
-            arr[0]=this.getResult(arr1)-log;
-            arr[1]=this.getResult(arr2)-log;
-            arr[2]=this.getResult(this.revese(arr1))-log;
-            arr[3]=this.getResult(this.revese(arr2))-log;
+            double ln= log(l);
+            arr[0]=this.getResult(arr1)-ln;
+            arr[1]=this.getResult(arr2)-ln;
+            arr[2]=this.getResult(this.reverse(arr1))-ln;
+            arr[3]=this.getResult(this.reverse(arr2))-ln;
 
         return arr;
     }
 
     public void fillArrays(double l, int N){
-        System.out.println("Filling arrays...");
+
         this.setArr1(this.taylorSp1(l, N));
-        System.out.println("...done");
+
         this.setArr2(this.taylorSp2(l, N));
-        System.out.println("...done");
+
     }
 
     public double getResult(double[] arr){
@@ -86,7 +87,7 @@ public class Taylor {
         }
         return sum;
     }
-    public double[] revese(double[] arr){
+    public double[] reverse(double[] arr){
         double[] tmparr= new double[arr.length];
         for(int i=arr.length-1;i>=0;i--){
             tmparr[arr.length-1-i]=arr[i];
@@ -97,6 +98,8 @@ public class Taylor {
     public double calc1(double x, int n){ //wyliczanie pojedynczego wyrazu z wzoru sumy
         return pow(-1, n+1)*pow(x-1,n)/n;
     }
+
+
     private double[]  taylorSp1(double l, int N){ //ze wzoru taylora
         double[] arr= new double[N];
         for(int n=1;n<=N;n++){
@@ -112,12 +115,12 @@ public class Taylor {
         double sum=l-1;
         double sum2=0;
         double[] arr=new double[N];
-        for (double n=1; (int)n<=N;n++){
+        for (int n=1; n<=N;n++){
 
-            arr[(int)n-1]=sum;
+            arr[n-1]=sum;
 
-            sum*=((-n)*(l-1)/(n+1));
-            if(((double)l/(double)(arr.length))*100%10==0) System.out.println(((double)l/(double)(arr.length)*100)+"%");
+            sum*=((double)(-n)*(l-1)/(double)(n+1));
+
         }
 
         return arr;
@@ -126,6 +129,11 @@ public class Taylor {
 
 
     private double pow(double l, int p){ //funkcja potegujaca
+        if(l==1) return 1;
+        if(l==-1){
+            if(p%2==0) return 1;
+            else return -1;
+        }
 
         if(l==0){
             return 0;
@@ -160,8 +168,13 @@ public class Taylor {
     public static void main(String[] args) throws IOException {
         Taylor t1=new Taylor();
         //t1.compression(t1.generateAllErrors(0.7,1.5,100, 0.0001), 100);
-        t1.writeToFile(0.3, 1.5, 1000, 0.000001, 1000, "taylor1.csv" );
-        t1.writeToFile(0.7, 1.5, 20, 0.000001, 1000, "taylor2.csv" );
+        long startTime = System.nanoTime();
+        t1.writeToFile(0.5, 1.5, 1000, 0.00001, 1000, "taylor1.csv" );
+        System.out.println(((System.nanoTime() - startTime)/1000000 + "ms"));
+        /* startTime = System.nanoTime();
+        t1.writeToFile(0.5, 1.5, 1000, 0.01, 1, "taylor2.csv" );
+        System.out.println(((System.nanoTime() - startTime)/1000000 + "ms"));*/
+
        /* System.out.println( t1.getReversedResult(t1.getArr1()));
         System.out.println( t1.getReversedResult(t1.getArr2()));
         System.out.println(t1.getResult(t1.getArr1()));
