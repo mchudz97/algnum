@@ -11,7 +11,6 @@ namespace Gauss
     {
         public enum Choices { G, PG, FG };
         private int size;
-        ArrayList swaps;
         private int red;
         public T[][] MatA;
         public T[] MatX;
@@ -37,10 +36,9 @@ namespace Gauss
                 MatX[col] = this.Convert(t2[col]);
                 Xmemory[col] = col;
             }
-            swaps = new ArrayList(0);
-            this.generateB();
+            this.GenerateB();
         }
-        public void exec(Choices a)
+        public void Exec(Choices a)
         {
             this.ToFile(this.MatA);
             this.ToFile(this.MatX);
@@ -63,37 +61,36 @@ namespace Gauss
            
 
         }
+
         private void G(T[][] tab1, T[] tab2)
         {
             GaussG(tab1, tab2);
             this.ToFile(this.Reverse(this.Eliminate(tab1, tab2)));
 
         }
+
         private void PG(T[][] tab1,T[] tab2)
         {
             GaussPG(tab1, tab2);
 
             this.ToFile(this.Reverse(this.Eliminate(tab1, tab2)));
         }
+
         private void FG(T[][] tab1, T[] tab2)
         {
             GaussFG(tab1, tab2);
             
-            T[] tab = this.Reverse(this.Eliminate(tab1, tab2));
+            T[] tab = Reverse(this.Eliminate(tab1, tab2));
             T[] temp = new T[this.size];
-            /*foreach (Tuple<int, int> tuple in this.swaps)
-            {
-                T temp = tab[tuple.Item1];
-                tab[tuple.Item1] = tab[tuple.Item2];
-                tab[tuple.Item2] = temp;
-            }*/
+            
             for (int i = 0; i < this.size; i++)
             {
                 temp[Xmemory[i]] = tab[i];
             }
-            this.ToFile(tab);
+            this.ToFile(temp);
             
         }
+
         public T[] Eliminate(T[][] tab1, T[] tab2)
         {
             T[] x= new T[this.size];
@@ -118,24 +115,30 @@ namespace Gauss
         {
             for (int i = 0; i <this.size; i++)
             {
-                Point p = this.getBiggestPG(tabA, i);
+                Point p = this.GetBiggestPG(tabA, i);
                 RowSwap(tabA, tabB, i, p.Y);
                 ResetColumn(i, tabA, tabB);
             }
         }
+
         public void GaussFG(T[][] tabA, T[] tabB)
         {
             
 
             for (int i=0;i<this.size; i++)
             {
-                Point p = this.getBiggestFG(tabA, i);
+                Point p = this.GetBiggestFG(tabA, i);
                 
-                RowSwap(tabA, tabB, i, p.Y);
+                
                 ColumnSwap(tabA, i, p.X);
+                RowSwap(tabA, tabB, i, p.Y);
                 ResetColumn(i, tabA, tabB);
+                int tempX = Xmemory[i];
+                Xmemory[i] = Xmemory[p.X];
+                Xmemory[p.X] = tempX;
             }
         }
+
         public void RowSwap(T[][] tab1, T[] tab2, int i, int j)
         {
             if (i == j) return;
@@ -149,12 +152,11 @@ namespace Gauss
             tab2[i] = tab2[j];
             tab2[j] = temp2;
         }
+
         public void ColumnSwap(T[][] tab, int i, int j)
         {
             if (i == j) return;
-            int tempX = Xmemory[i];
-            Xmemory[i] = Xmemory[j];
-            Xmemory[j] = tempX;
+            
             /*T[] temp = tab[i];
             tab[i] = tab[j];
             tab[j] = temp;*/
@@ -169,7 +171,7 @@ namespace Gauss
 
         }
 
-        private Point getBiggestFG(T[][] tab, int p) //FG
+        private Point GetBiggestFG(T[][] tab, int p) //FG
         {
             Point point = new Point(p, p);
             T val = tab[p][p];
@@ -187,7 +189,8 @@ namespace Gauss
             }
             return point;
         }
-        private Point getBiggestPG(T[][] tab, int p)
+
+        private Point GetBiggestPG(T[][] tab, int p)
         {
             Point point = new Point(p, p);
             T val = tab[p][p];
@@ -238,6 +241,7 @@ namespace Gauss
             }
             return 0;
         }
+
         private bool ABScheck(dynamic a, dynamic b)
         {
             if (typeof(T) == typeof(ModVar))
@@ -247,6 +251,7 @@ namespace Gauss
             return Math.Abs(a) > Math.Abs(b);
             
         }
+
         private T[] Reverse(T[] t)
         {
             T[] temp = new T[this.size];
@@ -256,6 +261,7 @@ namespace Gauss
             }
             return temp;
         }
+        
         private dynamic CreateZero()
         {
             if (typeof(T) == typeof(ModVar))
@@ -264,7 +270,8 @@ namespace Gauss
             }
             return 0;
         }
-        private void generateB() 
+        
+        private void GenerateB() 
         {
             for (int i = 0; i < this.size; i++)
             {
