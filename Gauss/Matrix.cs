@@ -13,10 +13,9 @@ namespace Gauss
         private int size;
         ArrayList swaps;
         private int red;
-        public T[][] MatA { get; set; }
-        public T[] MatX { get; set; }
-        public T[] MatX2 { get; set; }
-        public T[] MatB { get; set; }
+        public T[][] MatA;
+        public T[] MatX;
+        public T[] MatB;
         public int[] Xmemory;
         
 
