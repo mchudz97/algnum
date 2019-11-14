@@ -88,7 +88,23 @@ namespace Gauss
             BigInteger check2 = right.licznik * left.mianownik;
             return BigInteger.Abs(check1) < BigInteger.Abs(check2);
         }
-        
+        public static bool operator <(ModVar left, int i)
+        {
+            if (left.licznik > i)
+            {
+                return false;
+            }
+            return true;
+        }
+        public static bool operator >(ModVar left, int i)
+        {
+            if (left.licznik > i)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public override String ToString()
         {
             return licznik.ToString() + "/" + mianownik.ToString();

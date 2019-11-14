@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Text;
@@ -16,7 +17,7 @@ namespace Gauss
         public T[] MatX;
         public T[] MatB;
         public int[] Xmemory;
-        
+        Stopwatch sw;
 
         public Matrix(int size, int[][] t1, int[] t2)
         {
@@ -25,6 +26,7 @@ namespace Gauss
             MatB = new T[size];
             MatX = new T[size];
             Xmemory = new int[size];
+            sw = new Stopwatch();
             red = (int)Math.Pow(2, 16);
             for (int col = 0; col < this.size; col++)
             {
@@ -38,45 +40,61 @@ namespace Gauss
             }
             this.GenerateB();
         }
-        public void Exec(Choices a)
+        public void Exec(Choices a, String pathnorm, String pathtime)
         {
-            this.ToFile(this.MatA);
-            this.ToFile(this.MatX);
+            String path1 = "results.txt";
+            /*String path2 = "timers.txt";
+            String path3 = "norm.txt";*/
+            /*this.ToFile(this.MatA, path3);
+            this.ToFile(this.MatX, path3);*/
             T[][] t1 = this.MatA;
             T[] t2 = this.MatB;
+            T[] results=new T[this.size];
+            sw.Start();
             switch (a)
-            {
+            { 
                 case Choices.G:
-                    G(t1, t2);
+
+                    results=G(t1, t2);
                     break;
                 case Choices.PG:
-                    PG(t1, t2);
+                    results=PG(t1, t2);
                     break;
                 case Choices.FG:
-                    FG(t1, t2);
+                    results=FG(t1, t2);
                     break;
                 default:
                     break;
             }
-           
 
+            
+            sw.Stop();
+            results = this.Errors(results);
+            this.ToFile(results, path1, a.ToString());
+            StreamWriter file = File.AppendText(pathtime);
+            file.WriteLine( this.size + "\t"+typeof(T).ToString() + "\t" + a.ToString() + "\t" + sw.Elapsed);
+            file.Close();
+            Console.WriteLine("n="+this.size+"\t"+typeof(T).ToString() + "\t" + a.ToString() + "\t" + sw.Elapsed);
+            file= File.AppendText(pathnorm);
+            file.WriteLine(this.size + "\t" + typeof(T).ToString() + "\t" + a.ToString() + "\t" + this.Norm(results));
+            file.Close();
         }
 
-        private void G(T[][] tab1, T[] tab2)
+        private T[] G(T[][] tab1, T[] tab2)
         {
             GaussG(tab1, tab2);
-            this.ToFile(this.Reverse(this.Eliminate(tab1, tab2)));
+            return this.Reverse(this.Eliminate(tab1, tab2));
 
         }
 
-        private void PG(T[][] tab1,T[] tab2)
+        private T[] PG(T[][] tab1, T[] tab2)
         {
             GaussPG(tab1, tab2);
 
-            this.ToFile(this.Reverse(this.Eliminate(tab1, tab2)));
+            return this.Reverse(this.Eliminate(tab1, tab2));
         }
 
-        private void FG(T[][] tab1, T[] tab2)
+        private T[] FG(T[][] tab1, T[] tab2)
         {
             GaussFG(tab1, tab2);
             
@@ -87,10 +105,27 @@ namespace Gauss
             {
                 temp[Xmemory[i]] = tab[i];
             }
-            this.ToFile(temp);
+            return temp;
             
         }
-
+        private T Norm(T[] err)
+        {
+            T num = this.CreateZero();
+            for(int i = 0; i < this.size; i++)
+            {
+                num = (dynamic)err[i] * err[i];
+            }
+            return num;
+        }
+        private T[] Errors(T[] tab)
+        {
+            T[] errors = new T[this.size];
+            for (int i = 0; i < this.size; i++)
+            {
+                errors[i] = ABS((dynamic)tab[i]-this.MatX[i]);
+            }
+            return errors;
+        }
         public T[] Eliminate(T[][] tab1, T[] tab2)
         {
             T[] x= new T[this.size];
@@ -166,7 +201,7 @@ namespace Gauss
                 tab[i][k] = tab[j][k];
                 tab[j][k] = temp;
             }
-            swaps.Add(Tuple.Create(i, j));
+            
             
 
         }
@@ -179,7 +214,7 @@ namespace Gauss
             {
                 for (int j = p; j < this.size; j++)
                 {
-                    if (ABScheck(tab[i][j],(dynamic)val))
+                    if (ABS(tab[i][j])>ABS(val))//ABScheck(tab[i][j],(dynamic)val)
                     {
                         val = tab[i][j];
                         point.X = i;
@@ -196,7 +231,7 @@ namespace Gauss
             T val = tab[p][p];
             for (int i = p; i < this.size; i++)
             {
-                if (ABScheck(tab[p][i], (dynamic)val))
+                if (ABS(tab[p][i]) > ABS(val))
                 {
                     val = tab[p][i];
                     point.Y = i;
@@ -241,15 +276,19 @@ namespace Gauss
             }
             return 0;
         }
-
-        private bool ABScheck(dynamic a, dynamic b)
+        private dynamic ABS(T a)
         {
-            if (typeof(T) == typeof(ModVar))
+            if(typeof(T)== typeof(ModVar))
             {
-                return (dynamic)a>b;
+                ModVar m= new ModVar(0, 0);
+                if (a < (dynamic)m)
+                {
+                    ModVar m2 = new ModVar(-1, 1);
+                    return a * (dynamic)m2;
+                }
+                return a;
             }
-            return Math.Abs(a) > Math.Abs(b);
-            
+            return Math.Abs((dynamic)a);
         }
 
         private T[] Reverse(T[] t)
@@ -287,20 +326,28 @@ namespace Gauss
 
             }
         }
-        
-        public void ToFile(T[] tab)
+        public void ToFile(T[] tab,String path, String method)
         {
-            StreamWriter file = File.AppendText("results.txt");
+            StreamWriter file = File.AppendText(path);
+            file.WriteLine(method);
+            file.Close();
+            this.ToFile(tab, path);
+            
+
+        }
+        public void ToFile(T[] tab, String path)
+        {
+            StreamWriter file = File.AppendText(path);
             for (int  i = 0;  i < this.size;  i++)
             {
-                file.WriteLine("[ "+ tab[i]+" ]");
+                file.WriteLine( tab[i]);
             }
             file.WriteLine("\n\n");
             file.Close();
         }
-        public void ToFile(T[][] tab)
+        public void ToFile(T[][] tab, String path)
         {
-            StreamWriter file = File.AppendText("results.txt");
+            StreamWriter file = File.AppendText(path);
             for (int i = 0; i < this.size; i++)
             {
                 file.Write("[ ");
