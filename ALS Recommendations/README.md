@@ -1,0 +1,1 @@
+using https://snap.stanford.edu/data/amazon-meta.html base for parser.
